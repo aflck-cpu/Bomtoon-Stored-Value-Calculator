@@ -1,507 +1,1038 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>儲值配置計算器</title>
     <style>
+        /* ============================================================
+            【色彩控制中心】：直接修改此處的色碼即可更換顏色
+            ============================================================ */
         :root {
-            --primary-pink: #ff33ae;
-            --primary-pink-hover: #e02398;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #cbd5e1;
+            --primary: #ff33ae;        /* 【主色調】：頂部標題、選中邊框 */
+            --primary-light: #fff0f8;  /* 【淺主色】：選中狀態背景 */
+            --bg: #f8fafc;             /* 【全域背景】：外層底色 */
+            --card-bg: #ffffff;        /* 【主卡片底色】：計算器白色主體 */
+            --text: #1e293b;           /* 【主要文字顏色】：標籤與標題 */
+            --text-muted: #64748b;     /* 【次要文字顏色】：說明小字 */
+            --accent: #ff33ae;         /* 【強調高亮色】：花費金額大字 */
+            --border: #e2e8f0;         /* 【邊框與分隔線顏色】 */
+
+            /* 快捷按鈕樣式（清空、+100、+500） */
+            --chip-bg: #e0edff;        /* 【修改顏色】：快捷按鈕淡藍色底色 */
+            --chip-text: #4a71e0;      /* 【修改顏色】：快捷按鈕文字顏色 */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            overflow-x: hidden;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 20px;
-            color: var(--text-main);
+            background-color: var(--bg);
+            color: var(--text);
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
+            padding: 12px;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                align-items: center;
+                padding: 20px;
+            }
         }
 
         .container {
             width: 100%;
-            max-width: 720px;
+            max-width: 760px;
             background: var(--card-bg);
-            border-radius: 20px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
             overflow: hidden;
-            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            margin: auto;
         }
 
-        /* 頂部粉紅 banner */
-        .header-banner {
-            background-color: var(--primary-pink);
+        header {
+            background: var(--primary);
             color: white;
-            padding: 24px 20px;
+            padding: 16px 18px;
             text-align: center;
         }
 
-        .header-banner h1 {
-            margin: 0 0 6px 0;
-            font-size: 22px;
+        header h1 {
+            font-size: 1.2rem;
             font-weight: 700;
         }
 
-        .header-banner p {
-            margin: 0;
-            font-size: 13px;
-            opacity: 0.9;
+        .plans-badge {
+            margin-top: 6px;
+            font-size: 0.8rem;
+            opacity: 0.95;
+            word-break: break-word;
         }
 
-        /* 主體 2 欄佈局 */
-        .main-content {
-            padding: 20px;
+        .mode-selector {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            padding: 14px 14px 0 14px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 6px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: white;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .mode-btn small {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: normal;
+            margin-top: 2px;
+            line-height: 1.2;
+        }
+
+        .mode-btn.active {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .content-layout {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            padding: 14px;
         }
 
-        @media (max-width: 650px) {
-            .main-content {
-                grid-template-columns: 1fr;
+        @media (min-width: 680px) {
+            .content-layout {
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                padding: 20px 24px 24px 24px;
+            }
+            .mode-selector {
+                padding: 16px 24px 0 24px;
+                gap: 12px;
+            }
+            .mode-btn {
+                padding: 12px;
+                font-size: 0.95rem;
             }
         }
 
-        /* 方案卡片區 */
-        .plans-selection {
-            grid-column: 1 / -1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 10px;
+        .input-card, .result-card {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-width: 0;
         }
 
-        .plan-card {
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 12px;
-            text-align: center;
-            cursor: pointer;
-            background: #fff;
-            transition: all 0.2s;
-        }
-
-        .plan-card.active {
-            border-color: var(--primary-pink);
-            background: #fff0f8;
-        }
-
-        .plan-card .plan-title {
-            font-weight: 700;
-            font-size: 14px;
-            color: var(--text-main);
-            margin-bottom: 4px;
-        }
-
-        .plan-card.active .plan-title {
-            color: var(--primary-pink);
-        }
-
-        .plan-card .plan-desc {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        /* 輸入區塊 */
-        .section-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text-main);
+        .input-group label {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 600;
             margin-bottom: 6px;
+            color: var(--text);
         }
 
-        .input-box {
+        .input-wrapper input {
             width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border-color);
+            padding: 11px 12px;
+            border: 1.5px solid var(--border);
             border-radius: 10px;
-            font-size: 14px;
-            box-sizing: border-box;
+            font-size: 1rem;
             outline: none;
             transition: border-color 0.2s;
-            background: #fff;
+            -webkit-appearance: none;
         }
 
-        .input-box:focus {
-            border-color: var(--primary-pink);
+        .input-wrapper input:focus {
+            border-color: var(--primary);
         }
 
-        /* 快速按鈕列 */
-        .quick-btns {
+        .quick-chips {
             display: flex;
+            flex-wrap: wrap;
             gap: 6px;
             margin-top: 8px;
         }
 
-        .btn-quick {
-            padding: 6px 12px;
-            font-size: 12px;
-            border-radius: 6px;
+        .chip {
+            flex: 1 1 auto;
+            text-align: center;
+            padding: 6px 10px;
+            background: var(--chip-bg);
+            color: var(--chip-text);
             border: none;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 700;
             cursor: pointer;
-            font-weight: 600;
-            transition: opacity 0.2s;
+            white-space: nowrap;
+            transition: transform 0.1s, opacity 0.2s;
         }
 
-        .btn-quick.clear {
-            background-color: #e2e8f0;
-            color: #475569;
+        .chip:active {
+            transform: scale(0.96);
+            opacity: 0.8;
         }
 
-        .btn-quick.add {
-            background-color: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .btn-quick:hover {
-            opacity: 0.85;
-        }
-
-        .input-group {
-            margin-bottom: 16px;
-        }
-
-        /* 右側結果面板 */
-        .result-panel {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            font-size: 15px;
-        }
-
-        .result-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 15px;
-            color: var(--text-muted);
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 12px;
-            margin-bottom: 14px;
-        }
-
-        .result-header .status {
-            font-weight: 700;
-            font-size: 17px;
-            color: var(--text-main);
-        }
-
-        .result-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 15px;
-            margin-bottom: 12px;
-            color: var(--text-muted);
-        }
-
-        .result-row span:last-child {
-            font-weight: 700;
-            font-size: 16px;
-            color: var(--text-main);
-        }
-
-        /* 推薦組合條列式區塊 */
-        .combo-list-box {
-            background: #fff;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 14px;
-            min-height: 40px;
-        }
-
-        .combo-item {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-main);
-            padding: 4px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .combo-item::before {
-            content: "•";
-            color: var(--primary-pink);
-            font-size: 18px;
-        }
-
-        .total-cost-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 14px;
-            margin-top: auto;
-        }
-
-        .total-cost-label {
-            font-weight: 700;
-            font-size: 16px;
-            color: var(--text-main);
-        }
-
-        .total-cost-value {
-            font-size: 26px;
-            font-weight: 800;
-            color: var(--primary-pink);
-        }
-
-        /* 優惠券折價設定區 */
+        /* 優惠券選項區塊 */
         .coupon-box {
-            grid-column: 1 / -1;
             background: #fff0f8;
-            border: 1px dashed var(--primary-pink);
-            padding: 12px;
+            border: 1px dashed var(--primary);
+            padding: 10px 12px;
             border-radius: 10px;
-            font-size: 13px;
+            font-size: 0.85rem;
             display: flex;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
+            margin-top: 4px;
         }
 
         .coupon-box label {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             cursor: pointer;
             font-weight: 600;
             color: #d21791;
         }
 
         .coupon-box input[type="checkbox"] {
-            accent-color: var(--primary-pink);
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+        }
+
+        .result-card {
+            background: #f1f5f9;
+            padding: 16px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border);
+            gap: 8px;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .result-val {
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .highlight-cost {
+            font-size: 1.5rem;
+            color: var(--accent);
+            font-weight: 800;
+        }
+
+        .breakdown-box {
+            background: white;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-top: 10px;
+            max-height: 140px;
+            overflow-y: auto;
+        }
+
+        .combo-item {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text);
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .combo-item:last-child {
+            border-bottom: none;
+        }
+
+        .combo-item::before {
+            content: "•";
+            color: var(--primary);
+            font-size: 16px;
+        }
+
+        .save-box {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+        }
+
+        .save-input {
+            flex: 1;
+            min-width: 0;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.88rem;
+            outline: none;
+        }
+
+        .save-input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-save {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .auto-save-tip {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        /* 歷史紀錄外層區塊 */
+        .history-section {
+            border-top: 1px solid var(--border);
+            padding: 16px 14px 20px 14px;
+            background: #ffffff;
+        }
+
+        @media (min-width: 680px) {
+            .history-section {
+                padding: 20px 24px 24px 24px;
+            }
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .history-header h2 {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .batch-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .select-all-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn-batch-delete {
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-batch-delete:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .history-empty {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            text-align: center;
+            padding: 14px 0;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .record-checkbox {
+            margin-top: 4px;
+            width: 17px;
+            height: 17px;
+            accent-color: var(--primary);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .history-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        @media (min-width: 480px) {
+            .history-content {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .history-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        .history-title-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .history-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text);
+            word-break: break-all;
+        }
+
+        .history-time-tag {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            background: var(--border);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: normal;
+        }
+
+        .history-details {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            word-break: break-all;
+        }
+
+        .history-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            align-self: flex-end;
+        }
+
+        @media (min-width: 480px) {
+            .history-actions {
+                align-self: center;
+                flex-shrink: 0;
+            }
+        }
+
+        .btn-load {
+            background: var(--chip-bg);
+            color: var(--chip-text);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- 頂部標題列 -->
-    <div class="header-banner">
-        <h1>儲值配置計算器</h1>
-        <p id="bannerSubText">當前選擇：優惠券與標準方案組合</p>
+    <header>
+        <h1>一般儲值配置計算器</h1>
+        <div class="plans-badge" id="bannerBadge">當前選擇：優惠券與動態最佳方案組合</div>
+    </header>
+
+    <div class="mode-selector">
+        <button class="mode-btn active" id="btnModeStandard" onclick="setMode('standard')">
+            標準優惠方案<small>(含 100元券 / 10%折價券)</small>
+        </button>
+        <button class="mode-btn" id="btnModeSimple" onclick="setMode('simple')">
+            精簡模式<small>(僅基礎方案比對)</small>
+        </button>
     </div>
 
-    <div class="main-content">
-        <!-- 方案選擇切換 -->
-        <div class="plans-selection">
-            <div class="plan-card active" onclick="selectPlan('standard', this)">
-                <div class="plan-title">標準優惠方案</div>
-                <div class="plan-desc">(含 100元券 / 10%折價券)</div>
+    <div class="content-layout">
+        <!-- 輸入區塊 -->
+        <div class="input-card">
+            <div class="input-group">
+                <label for="currentAmountInput">目前持有的 c 數量</label>
+                <div class="input-wrapper">
+                    <input type="number" id="currentAmountInput" inputmode="numeric" placeholder="請輸入現有數值 (例如 0)" min="0" value="0">
+                </div>
+                <div class="quick-chips">
+                    <button class="chip" onclick="clearInput('currentAmountInput')">清空</button>
+                    <button class="chip" onclick="addValue('currentAmountInput', 100)">+100</button>
+                    <button class="chip" onclick="addValue('currentAmountInput', 500)">+500</button>
+                </div>
             </div>
-            <div class="plan-card" onclick="selectPlan('simple', this)">
-                <div class="plan-title">精簡儲值模式</div>
-                <div class="plan-desc">(僅基礎方案對照)</div>
+
+            <div class="input-group">
+                <label for="currentPointsInput">目前持有的 P 點數 (200P = 1c)</label>
+                <div class="input-wrapper">
+                    <input type="number" id="currentPointsInput" inputmode="numeric" placeholder="請輸入 P 點數 (例如 0)" min="0" value="0">
+                </div>
+                <div class="quick-chips">
+                    <button class="chip" onclick="clearInput('currentPointsInput')">清空</button>
+                    <button class="chip" onclick="addValue('currentPointsInput', 1000)">+1000</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="targetAmountInput">目標需要的 c 數量</label>
+                <div class="input-wrapper">
+                    <input type="number" id="targetAmountInput" inputmode="numeric" placeholder="請直接輸入目標數值 (例如 0)" min="0" value="0">
+                </div>
+                <div class="quick-chips">
+                    <button class="chip" onclick="clearInput('targetAmountInput')">清空</button>
+                    <button class="chip" onclick="addValue('targetAmountInput', 100)">+100</button>
+                    <button class="chip" onclick="addValue('targetAmountInput', 500)">+500</button>
+                </div>
+            </div>
+
+            <!-- 優惠券勾選區塊 -->
+            <div class="coupon-box" id="couponSection">
+                <span style="font-weight: 700; color: var(--primary);">🎟️ 現有折價券：</span>
+                <label><input type="checkbox" id="useCoupon1" checked onchange="refreshCalculation()"> 100元券</label>
+                <label><input type="checkbox" id="useCoupon2" checked onchange="refreshCalculation()"> 10%折價券</label>
             </div>
         </div>
 
-        <!-- 左側：輸入控制區 -->
-        <div class="input-section">
-            <div class="input-group">
-                <div class="section-title">目前持有的 c 數量</div>
-                <input type="number" id="currentC" class="input-box" value="162" placeholder="請輸入現有數值 (例如 0)" oninput="calculate()">
-                <div class="quick-btns">
-                    <button class="btn-quick clear" onclick="setValue('currentC', 0)">清空</button>
-                    <button class="btn-quick add" onclick="addValue('currentC', 100)">+100</button>
-                    <button class="btn-quick add" onclick="addValue('currentC', 500)">+500</button>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <div class="section-title">目前持有的 P 點數 (200P = 1c)</div>
-                <input type="number" id="currentP" class="input-box" value="13250" placeholder="請輸入 P 點數量" oninput="calculate()">
-                <div class="quick-btns">
-                    <button class="btn-quick clear" onclick="setValue('currentP', 0)">清空</button>
-                    <button class="btn-quick add" onclick="addValue('currentP', 1000)">+1000</button>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <div class="section-title">目標需要的 c 數量</div>
-                <input type="number" id="targetC" class="input-box" value="754" placeholder="請直接輸入目標數值" oninput="calculate()">
-                <div class="quick-btns">
-                    <button class="btn-quick clear" onclick="setValue('targetC', 0)">清空目標</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 右側：結果與摘要面板 -->
-        <div class="result-panel">
+        <!-- 運算結果展示區塊 -->
+        <div class="result-card">
             <div>
-                <div class="result-header">
-                    <span>尚需補充量</span>
-                    <span id="neededCDisplay" class="status">等待輸入</span>
+                <div class="result-row">
+                    <span class="result-label">尚需補充量</span>
+                    <span class="result-val" id="displayNeeded">-</span>
                 </div>
-                
-                <div class="section-title" style="font-size: 14px; margin-bottom: 6px;">推薦最佳儲值組合</div>
-                <div id="comboDisplayList" class="combo-list-box">
-                    <div class="combo-item" style="color: var(--text-muted); font-weight: normal;">等待輸入</div>
+
+                <div class="result-label" style="margin-top: 10px; font-weight: 700;">推薦最佳儲值組合</div>
+                <div class="breakdown-box" id="breakdownContainer">
+                    <!-- 由 JS 動態注入條列式組合 -->
+                </div>
+
+                <div class="result-row" style="margin-top: 10px;">
+                    <span class="result-label">現有總 C (含 P 換算)</span>
+                    <span class="result-val" id="displayExistingTotal">0 c</span>
                 </div>
 
                 <div class="result-row">
-                    <span>現有總 C (含 P 換算)</span>
-                    <span id="totalExistingDisplay">0 c</span>
-                </div>
-                <div class="result-row">
-                    <span>實際獲得 / 最終總量</span>
-                    <span id="finalTotalDisplay">-</span>
+                    <span class="result-label">獲得 / 最終總量</span>
+                    <span class="result-val" id="displayFinal">-</span>
                 </div>
             </div>
 
-            <div class="total-cost-section">
-                <div class="total-cost-label">最低總花費</div>
-                <div id="totalCostDisplay" class="total-cost-value">$0</div>
+            <div>
+                <div class="result-row" style="margin-top: 14px; border: none;">
+                    <span class="result-label" style="font-size: 1rem; font-weight: 700;">最低總花費</span>
+                    <span class="highlight-cost" id="displayCost">$0</span>
+                </div>
+
+                <div class="save-box">
+                    <input type="text" id="recordNameInput" class="save-input" placeholder="紀錄名稱 (留空為「未命名N」)">
+                    <button class="btn-save" onclick="manualSaveRecord()">儲存</button>
+                </div>
+                <div class="auto-save-tip">提示：跳出或關閉網頁前，若未儲存將自動備份</div>
             </div>
         </div>
+    </div>
 
-        <!-- 優惠券勾選設定 -->
-        <div class="coupon-box" id="couponSection">
-            <span style="font-weight: 700; color: var(--primary-pink);">🎟️ 優惠券：</span>
-            <label><input type="checkbox" id="useCoupon1" checked onchange="calculate()"> 100元折價券</label>
-            <label><input type="checkbox" id="useCoupon2" checked onchange="calculate()"> 10%折價券</label>
+    <!-- 歷史紀錄管理清單 -->
+    <div class="history-section">
+        <div class="history-header">
+            <h2>儲存的歷史紀錄</h2>
+            <div class="batch-actions" id="batchActionControls" style="display: none;">
+                <label class="select-all-label">
+                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)"> 全選
+                </label>
+                <button class="btn-batch-delete" id="btnBatchDelete" onclick="deleteSelectedRecords()" disabled>刪除所選 (0)</button>
+            </div>
+        </div>
+        <div id="historyListContainer" class="history-list">
+            <!-- 歷史紀錄由 JS 動態產生 -->
         </div>
     </div>
 </div>
 
 <script>
-let currentPlanMode = 'standard';
+    let currentMode = 'standard';
+    let latestResult = null;
+    let isCurrentStateSaved = false;
+    let selectedRecordIds = new Set();
 
-function selectPlan(mode, el) {
-    currentPlanMode = mode;
-    document.querySelectorAll('.plan-card').forEach(card => card.classList.remove('active'));
-    el.classList.add('active');
-    
-    if(mode === 'standard') {
-        document.getElementById('bannerSubText').innerText = "當前選擇：標準優惠方案 (含折價券)";
-        document.getElementById('couponSection').style.display = 'flex';
-    } else {
-        document.getElementById('bannerSubText').innerText = "當前選擇：精簡儲值模式";
-        document.getElementById('couponSection').style.display = 'none';
-    }
-    calculate();
-}
-
-function setValue(id, val) {
-    document.getElementById(id).value = val;
-    calculate();
-}
-
-function addValue(id, val) {
-    let box = document.getElementById(id);
-    box.value = (parseInt(box.value) || 0) + val;
-    calculate();
-}
-
-function calculate() {
-    const currentC = parseInt(document.getElementById("currentC").value) || 0;
-    const currentP = parseInt(document.getElementById("currentP").value) || 0;
-    const targetC = parseInt(document.getElementById("targetC").value) || 0;
-    
-    const pointsToC = Math.floor(currentP / 200);
-    const totalExistingC = currentC + pointsToC;
-    const targetNeededC = Math.max(0, targetC - totalExistingC);
-
-    document.getElementById("totalExistingDisplay").innerText = totalExistingC + " c";
-    
-    if (targetC <= 0) {
-        document.getElementById("neededCDisplay").innerText = "請輸入目標";
-        document.getElementById("comboDisplayList").innerHTML = `<div class="combo-item" style="color: var(--text-muted); font-weight: normal;">請輸入數值</div>`;
-        document.getElementById("finalTotalDisplay").innerText = "-";
-        document.getElementById("totalCostDisplay").innerText = "$0";
-        return;
-    }
-
-    document.getElementById("neededCDisplay").innerText = targetNeededC + " c";
+    const currentInput = document.getElementById('currentAmountInput');
+    const currentPointsInput = document.getElementById('currentPointsInput');
+    const targetInput = document.getElementById('targetAmountInput');
+    const bannerBadge = document.getElementById('bannerBadge');
+    const breakdownContainer = document.getElementById('breakdownContainer');
+    const recordNameInput = document.getElementById('recordNameInput');
+    const historyListContainer = document.getElementById('historyListContainer');
+    const batchActionControls = document.getElementById('batchActionControls');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const btnBatchDelete = document.getElementById('btnBatchDelete');
 
     const options = [
         { c: 10, cost: 59 },
         { c: 20, cost: 99 },
-        { c: 50, cost: 246 },
-        { c: 90, cost: 398 },
-        { c: 120, cost: 489 },
-        { c: 220, cost: 786 },
-        { c: 440, cost: 1499 },
-        { c: 590, cost: 1989 }
+        { c: 50, cost: 246 },   // 45 + 5
+        { c: 90, cost: 398 },   // 75 + 15
+        { c: 120, cost: 489 },  // 90 + 30
+        { c: 220, cost: 786 },  // 150 + 70
+        { c: 440, cost: 1499 }, // 300 + 140
+        { c: 590, cost: 1989 }  // 400 + 190
     ];
 
-    const enableCoupon1 = currentPlanMode === 'standard' && document.getElementById("useCoupon1").checked;
-    const enableCoupon2 = currentPlanMode === 'standard' && document.getElementById("useCoupon2").checked;
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('btnModeStandard').classList.toggle('active', mode === 'standard');
+        document.getElementById('btnModeSimple').classList.toggle('active', mode === 'simple');
 
-    let results = [];
+        if (mode === 'standard') {
+            bannerBadge.innerText = "當前選擇：標準優惠方案 (含折價券)";
+            document.getElementById('couponSection').style.display = 'flex';
+        } else {
+            bannerBadge.innerText = "當前選擇：精簡模式 (不使用折價券)";
+            document.getElementById('couponSection').style.display = 'none';
+        }
 
-    function searchCoupons(curC, curCost, lastIdx, path, c1Used, c2Used) {
-        if (curC >= targetNeededC) {
-            results.push({ cost: curCost, addedC: curC, path: [...path] });
+        refreshCalculation();
+    }
+
+    function calculateOptimalPlan(currentC, currentPoints, targetC, mode) {
+        const pointsToC = Math.floor(currentPoints / 200);
+        const totalExistingC = currentC + pointsToC;
+        const neededAmount = Math.max(0, targetC - totalExistingC);
+
+        if (neededAmount === 0) {
+            return {
+                totalExistingC: totalExistingC,
+                neededAmount: 0,
+                obtainedAmount: 0,
+                finalAmount: totalExistingC,
+                minCost: 0,
+                breakdownSummary: "無需額外儲值",
+                breakdownHtml: '<div class="combo-item" style="color: var(--text-muted); font-weight: normal;">已達標，無需補充</div>'
+            };
+        }
+
+        const enableCoupon1 = mode === 'standard' && document.getElementById("useCoupon1").checked;
+        const enableCoupon2 = mode === 'standard' && document.getElementById("useCoupon2").checked;
+
+        let results = [];
+
+        function searchCoupons(curC, curCost, lastIdx, path, c1Used, c2Used) {
+            if (curC >= neededAmount) {
+                results.push({ cost: curCost, addedC: curC, path: [...path] });
+                return;
+            }
+            for (let i = lastIdx; i < options.length; i++) {
+                let opt = options[i];
+                // 原價選項
+                searchCoupons(curC + opt.c, curCost + opt.cost, i, [...path, { ...opt, finalPrice: opt.cost, type: '原價' }], c1Used, c2Used);
+                
+                // 100元折價券 (需滿500元)
+                if (enableCoupon1 && !c1Used && opt.cost >= 500) {
+                    let discCost = Math.max(0, opt.cost - 100);
+                    searchCoupons(curC + opt.c, curCost + discCost, i, [...path, { ...opt, finalPrice: discCost, type: '100元券' }], true, c2Used);
+                }
+                
+                // 10%折價券 (需滿500元)
+                if (enableCoupon2 && !c2Used && opt.cost >= 500) {
+                    let discCost = Math.round(opt.cost * 0.9);
+                    searchCoupons(curC + opt.c, curCost + discCost, i, [...path, { ...opt, finalPrice: discCost, type: '10%折' }], c1Used, true);
+                }
+            }
+        }
+
+        searchCoupons(0, 0, 0, [], false, false);
+        results.sort((a, b) => a.cost - b.cost);
+
+        if (results.length > 0) {
+            let best = results[0];
+            let comboSummary = {};
+            best.path.forEach(item => {
+                let key = `${item.c}c (${item.type})`;
+                if (!comboSummary[key]) {
+                    comboSummary[key] = { count: 0, totalPrice: 0 };
+                }
+                comboSummary[key].count += 1;
+                comboSummary[key].totalPrice += item.finalPrice;
+            });
+
+            let htmlContent = "";
+            let summaryParts = [];
+            for (let key in comboSummary) {
+                let data = comboSummary[key];
+                htmlContent += `<div class="combo-item">${key} x<span style="color: #ff0000; font-weight: bold;">${data.count}</span> = $${data.totalPrice}</div>`;
+                summaryParts.push(`${key} x${data.count}`);
+            }
+
+            return {
+                totalExistingC: totalExistingC,
+                neededAmount: neededAmount,
+                obtainedAmount: best.addedC,
+                finalAmount: totalExistingC + best.addedC,
+                minCost: best.cost,
+                breakdownSummary: summaryParts.join(' / '),
+                breakdownHtml: htmlContent
+            };
+        } else {
+            return {
+                totalExistingC: totalExistingC,
+                neededAmount: neededAmount,
+                obtainedAmount: 0,
+                finalAmount: totalExistingC,
+                minCost: 0,
+                breakdownSummary: "找不到合適組合",
+                breakdownHtml: '<div class="combo-item" style="color: var(--text-muted); font-weight: normal;">找不到合適組合</div>'
+            };
+        }
+    }
+
+    function refreshCalculation() {
+        const rawTarget = targetInput.value.trim();
+
+        if (rawTarget === "") {
+            latestResult = null;
+            document.getElementById('displayNeeded').innerText = "等待輸入";
+            document.getElementById('displayExistingTotal').innerText = "0 c";
+            document.getElementById('displayFinal').innerText = "-";
+            document.getElementById('displayCost').innerText = "$0";
+            breakdownContainer.innerHTML = '<div class="combo-item" style="color: var(--text-muted); font-weight: normal;">請輸入目標數值</div>';
             return;
         }
-        for (let i = lastIdx; i < options.length; i++) {
-            let opt = options[i];
-            searchCoupons(curC + opt.c, curCost + opt.cost, i, [...path, { ...opt, finalPrice: opt.cost, type: '原價' }], c1Used, c2Used);
-            
-            if (enableCoupon1 && !c1Used && opt.cost >= 500) {
-                let discCost = Math.max(0, opt.cost - 100);
-                searchCoupons(curC + opt.c, curCost + discCost, i, [...path, { ...opt, finalPrice: discCost, type: '100元券' }], true, c2Used);
-            }
-            
-            if (enableCoupon2 && !c2Used && opt.cost >= 500) {
-                let discCost = Math.round(opt.cost * 0.9);
-                searchCoupons(curC + opt.c, curCost + discCost, i, [...path, { ...opt, finalPrice: discCost, type: '10%折' }], c1Used, true);
-            }
+
+        const currentC = Math.max(0, parseInt(currentInput.value) || 0);
+        const currentPoints = Math.max(0, parseInt(currentPointsInput.value) || 0);
+        const targetAmount = Math.max(0, parseInt(rawTarget) || 0);
+
+        const result = calculateOptimalPlan(currentC, currentPoints, targetAmount, currentMode);
+        latestResult = {
+            mode: currentMode,
+            currentAmount: currentC,
+            currentPoints: currentPoints,
+            targetAmount: targetAmount,
+            ...result
+        };
+
+        isCurrentStateSaved = false;
+
+        document.getElementById('displayNeeded').innerText = `${result.neededAmount} c`;
+        document.getElementById('displayExistingTotal').innerText = `${result.totalExistingC} c (含P換算)`;
+        document.getElementById('displayFinal').innerText = `+${result.obtainedAmount} (共 ${result.finalAmount} c)`;
+        document.getElementById('displayCost').innerText = `$${result.minCost.toLocaleString()}`;
+
+        breakdownContainer.innerHTML = result.breakdownHtml;
+    }
+
+    function addValue(inputId, valueToAdd) {
+        const element = document.getElementById(inputId);
+        element.value = (parseInt(element.value) || 0) + valueToAdd;
+        refreshCalculation();
+    }
+
+    function clearInput(inputId) {
+        const element = document.getElementById(inputId);
+        element.value = "";
+        refreshCalculation();
+    }
+
+    // ==========================================
+    // 歷史紀錄處理邏輯
+    // ==========================================
+    const STORAGE_KEY = 'c_calculator_records_v2';
+
+    function getFormattedTimestamp() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const date = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${year}/${month}/${date} ${hours}:${minutes}`;
+    }
+
+    function getStoredRecords() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        } catch {
+            return [];
         }
     }
 
-    searchCoupons(0, 0, 0, [], false, false);
-    results.sort((a, b) => a.cost - b.cost);
-
-    if (results.length > 0) {
-        let best = results[0];
-        let finalSumC = totalExistingC + best.addedC;
-        
-        document.getElementById("totalCostDisplay").innerText = "$" + best.cost;
-        document.getElementById("finalTotalDisplay").innerText = finalSumC + " c";
-        
-        let comboSummary = {};
-        best.path.forEach(item => {
-            let key = `${item.c}c (${item.type})`;
-            if (!comboSummary[key]) {
-                comboSummary[key] = { count: 0, totalPrice: 0 };
+    function getNextUntitledName(records) {
+        let maxNum = 0;
+        const regex = /^未命名(\d+)$/;
+        records.forEach(r => {
+            const match = r.name.match(regex);
+            if (match) {
+                const num = parseInt(match[1], 10);
+                if (num > maxNum) maxNum = num;
             }
-            comboSummary[key].count += 1;
-            comboSummary[key].totalPrice += item.finalPrice;
         });
-        
-        let htmlContent = "";
-        for (let key in comboSummary) {
-            let data = comboSummary[key];
-            htmlContent += `<div class="combo-item">${key} x<span style="color: #ff0000; font-weight: bold;">${data.count}</span> = $${data.totalPrice}</div>`;
-        }
-        document.getElementById("comboDisplayList").innerHTML = htmlContent;
-
-    } else {
-        document.getElementById("comboDisplayList").innerHTML = `<div class="combo-item" style="color: var(--text-muted); font-weight: normal;">找不到合適組合</div>`;
-        document.getElementById("totalCostDisplay").innerText = "$0";
-        document.getElementById("finalTotalDisplay").innerText = "-";
+        return `未命名${maxNum + 1}`;
     }
-}
 
-// 初始化計算
-calculate();
+    function saveRecordCore(customName = "") {
+        if (!latestResult) return;
+
+        const list = getStoredRecords();
+        const finalName = customName.trim() || getNextUntitledName(list);
+
+        const newRecord = {
+            id: Date.now(),
+            name: finalName,
+            timestamp: getFormattedTimestamp(),
+            mode: latestResult.mode,
+            currentAmount: latestResult.currentAmount,
+            currentPoints: latestResult.currentPoints,
+            targetAmount: latestResult.targetAmount,
+            neededAmount: latestResult.neededAmount,
+            minCost: latestResult.minCost,
+            obtainedAmount: latestResult.obtainedAmount,
+            finalAmount: latestResult.finalAmount,
+            breakdownSummary: latestResult.breakdownSummary
+        };
+
+        list.unshift(newRecord);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        isCurrentStateSaved = true;
+        renderHistoryList();
+    }
+
+    function manualSaveRecord() {
+        if (!latestResult) {
+            alert('請先輸入目標數量再進行儲存！');
+            return;
+        }
+        const name = recordNameInput.value;
+        saveRecordCore(name);
+        recordNameInput.value = "";
+    }
+
+    function autoSaveBeforeLeave() {
+        if (latestResult && !isCurrentStateSaved) {
+            const name = recordNameInput.value;
+            saveRecordCore(name);
+        }
+    }
+
+    function deleteRecord(id) {
+        if (!confirm('確定要刪除這筆歷史紀錄嗎？')) return;
+        let list = getStoredRecords().filter(item => item.id !== id);
+        selectedRecordIds.delete(id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        renderHistoryList();
+    }
+
+    function toggleRecordSelection(id, isChecked) {
+        if (isChecked) {
+            selectedRecordIds.add(id);
+        } else {
+            selectedRecordIds.delete(id);
+        }
+        updateBatchButtonState();
+    }
+
+    function toggleSelectAll(isChecked) {
+        const records = getStoredRecords();
+        if (isChecked) {
+            records.forEach(r => selectedRecordIds.add(r.id));
+        } else {
+            selectedRecordIds.clear();
+        }
+        renderHistoryList();
+    }
+
+    function deleteSelectedRecords() {
+        const count = selectedRecordIds.size;
+        if (count === 0) return;
+
+        if (!confirm(`確定要刪除已選取的 ${count} 筆歷史紀錄嗎？`)) return;
+
+        let list = getStoredRecords().filter(item => !selectedRecordIds.has(item.id));
+        selectedRecordIds.clear();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        renderHistoryList();
+    }
+
+    function updateBatchButtonState() {
+        const count = selectedRecordIds.size;
+        const total = getStoredRecords().length;
+
+        btnBatchDelete.innerText = `刪除所選 (${count})`;
+        btnBatchDelete.disabled = count === 0;
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = total > 0 && count === total;
+        }
+    }
+
+    function loadRecord(id) {
+        const record = getStoredRecords().find(item => item.id === id);
+        if (!record) return;
+
+        setMode(record.mode || 'standard');
+        currentInput.value = record.currentAmount;
+        currentPointsInput.value = record.currentPoints || 0;
+        targetInput.value = record.targetAmount;
+        recordNameInput.value = record.name;
+
+        refreshCalculation();
+        isCurrentStateSaved = true;
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderHistoryList() {
+        const records = getStoredRecords();
+
+        if (records.length === 0) {
+            batchActionControls.style.display = 'none';
+            historyListContainer.innerHTML = '<div class="history-empty">尚無儲存的歷史紀錄</div>';
+            selectedRecordIds.clear();
+            return;
+        }
+
+        batchActionControls.style.display = 'flex';
+
+        historyListContainer.innerHTML = records.map(r => {
+            const isChecked = selectedRecordIds.has(r.id) ? 'checked' : '';
+            return `
+                <div class="history-item">
+                    <input type="checkbox" class="record-checkbox" ${isChecked} onchange="toggleRecordSelection(${r.id}, this.checked)">
+                    <div class="history-content">
+                        <div class="history-meta">
+                            <div class="history-title-row">
+                                <span class="history-title">${r.name}</span>
+                                <span class="history-time-tag">${r.timestamp || '已儲存'}</span>
+                            </div>
+                            <div class="history-details">
+                                ${r.mode === 'standard' ? '[標準優惠]' : '[精簡模式]'} 
+                                持有: ${r.currentAmount}c (${r.currentPoints || 0}P) ➔ 目標: ${r.targetAmount}c | 需補: ${r.neededAmount}c
+                            </div>
+                            <div class="history-details" style="color: var(--primary); font-weight: 600;">
+                                總計: $${r.minCost.toLocaleString()} | 組合: ${r.breakdownSummary}
+                            </div>
+                        </div>
+                        <div class="history-actions">
+                            <button class="btn-load" onclick="loadRecord(${r.id})">載入</button>
+                            <button class="btn-delete" onclick="deleteRecord(${r.id})">刪除</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        updateBatchButtonState();
+    }
+
+    currentInput.addEventListener('input', refreshCalculation);
+    currentPointsInput.addEventListener('input', refreshCalculation);
+    targetInput.addEventListener('input', refreshCalculation);
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            autoSaveBeforeLeave();
+        }
+    });
+
+    window.addEventListener('pagehide', autoSaveBeforeLeave);
+    window.addEventListener('beforeunload', autoSaveBeforeLeave);
+
+    refreshCalculation();
+    renderHistoryList();
 </script>
-
 </body>
 </html>
